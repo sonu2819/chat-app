@@ -1,44 +1,119 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Chat App</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="chat-container">
-    <div class="header">💬 Simple Chat</div>
-    <div id="messages"></div>
-    <div class="input-area">
-      <input id="msg" placeholder="Type a message..." />
-      <button onclick="send()">Send</button>
-    </div>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const msgBox = document.getElementById("msg");
-    const messagesDiv = document.getElementById("messages");
-
-    socket.on("receiveMessage", (data) => {
-      const div = document.createElement("div");
-      div.classList.add("message");
-      div.classList.add(data.id === socket.id ? "me" : "other");
-      div.textContent = data.text;
-      messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-
-    function send() {
-      if (msgBox.value.trim()) {
-        socket.emit("sendMessage", msgBox.value);
-        msgBox.value = "";
+  <head>
+    <title>Chat App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f9;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
       }
-    }
 
-    msgBox.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") send();
-    });
-  </script>
-</body>
+      #chat-container {
+        width: 100%;
+        max-width: 500px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+        overflow: hidden;
+      }
+
+      #messages {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .message {
+        max-width: 70%;
+        padding: 8px 12px;
+        border-radius: 15px;
+        word-wrap: break-word;
+      }
+
+      .me {
+        background: #007bff;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 0;
+      }
+
+      .other {
+        background: #e1f5fe;
+        align-self: flex-start;
+        border-bottom-left-radius: 0;
+      }
+
+      #form {
+        display: flex;
+        border-top: 1px solid #ccc;
+      }
+
+      #input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        outline: none;
+      }
+
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-container">
+      <ul id="messages"></ul>
+      <form id="form">
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <button>Send</button>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const messages = document.getElementById('messages');
+
+      // Ek random userId bana dete hain (temporary)
+      const userId = Math.random().toString(36).substring(2, 9);
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit('chat message', { userId, text: input.value });
+          input.value = '';
+        }
+      });
+
+      socket.on('chat message', function (msg) {
+        const item = document.createElement('li');
+        item.classList.add('message');
+
+        if (msg.userId === userId) {
+          item.classList.add('me');
+        } else {
+          item.classList.add('other');
+        }
+
+        item.textContent = msg.text;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+      });
+    </script>
+  </body>
 </html>
